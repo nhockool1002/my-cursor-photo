@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Typography, Button, Box } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MediaGrid from '@/components/MediaGrid';
-import { listObjectsV2, ListObjectsV2CommandOutput } from '@/services/s3Client';
+import { listObjectsV2 } from '@/services/s3Client';
 import { MediaItem } from '@/types';
 import folderMapping from '@/data/folderMapping.json';
 

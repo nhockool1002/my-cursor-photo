@@ -2,13 +2,13 @@ import { createTheme } from '@mui/material/styles';
 
 const baseTheme = {
   typography: {
-    fontFamily: '"Exo 2", sans-serif',
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
-      fontFamily: '"Exo 2", sans-serif',
-      fontWeight: 600,
+      fontFamily: '"Playfair Display", serif',
+      fontWeight: 700,
       fontSize: '2.5rem',
       '@media (max-width:600px)': {
-        fontSize: '1.5rem',
+        fontSize: '2rem',
       },
     },
     h2: {
@@ -70,7 +70,7 @@ const baseTheme = {
     button: {
       fontFamily: '"Exo 2", sans-serif',
       fontWeight: 500,
-      textTransform: 'none',
+      textTransform: 'none' as const,
     },
     caption: {
       fontFamily: '"Exo 2", sans-serif',

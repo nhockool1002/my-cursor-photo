@@ -7,15 +7,14 @@ import MediaGrid from '@/components/MediaGrid';
 import { MediaItem } from '@/types';
 import { favoriteService } from '@/services/favoriteService';
 
-export const Favorite = () => {
+const Favorite: React.FC = () => {
   const navigate = useNavigate();
-  const [items, setItems] = useState<MediaItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [favorites, setFavorites] = useState<MediaItem[]>([]);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
 
   useEffect(() => {
     const favorites = favoriteService.getFavorites();
-    setItems(favorites.map(photo => ({
+    setFavorites(favorites.map(photo => ({
       key: photo.id,
       url: photo.url,
       isFavorite: true
@@ -24,7 +23,7 @@ export const Favorite = () => {
 
   const handleRemoveFavorite = (photoId: string) => {
     favoriteService.removeFavorite(photoId);
-    setItems(prevItems => prevItems.filter(item => item.key !== photoId));
+    setFavorites(prevItems => prevItems.filter(item => item.key !== photoId));
   };
 
   const handleOpenConfirmDialog = () => {
@@ -37,7 +36,7 @@ export const Favorite = () => {
 
   const handleDeleteAll = () => {
     favoriteService.clearFavorites();
-    setItems([]);
+    setFavorites([]);
     handleCloseConfirmDialog();
   };
 
@@ -89,7 +88,7 @@ export const Favorite = () => {
         >
           Ảnh yêu thích
         </Typography>
-        {items.length > 0 && (
+        {favorites.length > 0 && (
           <Button
             startIcon={<DeleteIcon />}
             onClick={handleOpenConfirmDialog}
@@ -105,14 +104,13 @@ export const Favorite = () => {
           </Button>
         )}
       </Box>
-      {items.length === 0 ? (
+      {favorites.length === 0 ? (
         <Typography variant="h6" textAlign="center" color="text.secondary">
           Chưa có ảnh yêu thích nào
         </Typography>
       ) : (
         <MediaGrid 
-          items={items} 
-          isLoading={isLoading}
+          items={favorites} 
           onToggleFavorite={handleRemoveFavorite}
         />
       )}
@@ -140,4 +138,6 @@ export const Favorite = () => {
       </Dialog>
     </Container>
   );
-}; 
+};
+
+export default Favorite; 

@@ -17,11 +17,10 @@ interface MediaCardProps {
   onToggleFavorite?: (photoId: string) => void;
 }
 
-const MediaCard = ({ item, onPrev, onNext, onOpen, isCurrent = false, onToggleFavorite }: MediaCardProps) => {
+const MediaCard: React.FC<MediaCardProps> = ({ item, onPrev, onNext, onOpen, isCurrent = false, onToggleFavorite }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isThumbnailLoaded, setIsThumbnailLoaded] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const isVideo = item.key.toLowerCase().endsWith('.mov') || item.key.toLowerCase().endsWith('.mp4');

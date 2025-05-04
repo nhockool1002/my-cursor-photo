@@ -6,7 +6,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import FavoriteButton from '@/components/FavoriteButton';
 import HomePage from '@/pages/HomePage';
 import FolderDetailPage from '@/pages/FolderDetailPage';
-import { Favorite } from '@/pages/Favorite';
+import Favorite from '@/pages/Favorite';
 
 const App = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {

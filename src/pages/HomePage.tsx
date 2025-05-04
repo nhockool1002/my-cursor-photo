@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Container, Typography } from '@mui/material';
 import FolderGrid from '@/components/FolderGrid';
-import { listObjectsV2, ListObjectsV2CommandOutput } from '@/services/s3Client';
+import { listObjectsV2 } from '@/services/s3Client';
 import { Folder } from '@/types';
 import folderMapping from '@/data/folderMapping.json';
 
