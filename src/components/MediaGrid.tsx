@@ -74,6 +74,7 @@ const MediaGrid = ({ items, isLoading = false, onToggleFavorite }: MediaGridProp
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
     setCurrentIndex(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (isLoading) {

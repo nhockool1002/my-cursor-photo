@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { listObjectsV2 } from '@/services/s3Client';
 import { Folder } from '@/types';
 import FolderSkeleton from './FolderSkeleton';
+import { getSignedUrlForObject } from '@/utils/s3Client';
 
 interface FolderGridProps {
   folders: Folder[];
@@ -17,38 +18,48 @@ const FolderGrid = ({ folders, isLoading = false }: FolderGridProps) => {
 
   useEffect(() => {
     const fetchThumbnails = async () => {
-      const newThumbnails: Record<string, string> = {};
-      
-      for (const folder of folders) {
-        try {
-          const response = await listObjectsV2({
-            Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
-            Prefix: `${folder.name}/`
-          });
+      const cached = sessionStorage.getItem('folderThumbnails');
+      let cachedThumbnails: Record<string, string> = {};
 
-          if (response.Contents && response.Contents.length > 0) {
-            // Tìm item đầu tiên là hình ảnh
-            const imageItem = response.Contents.find(item => {
-              const key = item.Key?.toLowerCase() || '';
-              return (
-                key.endsWith('.jpg') ||
-                key.endsWith('.jpeg') ||
-                key.endsWith('.png') ||
-                key.endsWith('.heic') ||
-                key.endsWith('.heif')
-              );
+      if (cached) {
+        cachedThumbnails = JSON.parse(cached);
+      }
+
+      const updatedThumbnails = { ...cachedThumbnails };
+
+      for (const folder of folders) {
+        if (!updatedThumbnails[folder.name]) {
+          try {
+            const response = await listObjectsV2({
+              Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
+              Prefix: `${folder.name}/`
             });
 
-            if (imageItem?.Key) {
-              newThumbnails[folder.name] = `https://${import.meta.env.VITE_S3_BUCKET_NAME}.s3.${import.meta.env.VITE_AWS_REGION}.amazonaws.com/${imageItem.Key}`;
+            if (response.Contents && response.Contents.length > 0) {
+              const imageItem = response.Contents.find(item => {
+                const key = item.Key?.toLowerCase() || '';
+                return (
+                  key.endsWith('.jpg') ||
+                  key.endsWith('.jpeg') ||
+                  key.endsWith('.png') ||
+                  key.endsWith('.heic') ||
+                  key.endsWith('.heif')
+                );
+              });
+
+              if (imageItem?.Key) {
+                const signedUrl = await getSignedUrlForObject(imageItem.Key);
+                updatedThumbnails[folder.name] = signedUrl;
+              }
             }
+          } catch (error) {
+            console.error(`Error fetching thumbnail for ${folder.name}:`, error);
           }
-        } catch (error) {
-          console.error(`Error fetching thumbnail for ${folder.name}:`, error);
         }
       }
 
-      setThumbnails(newThumbnails);
+      setThumbnails(updatedThumbnails);
+      sessionStorage.setItem('folderThumbnails', JSON.stringify(updatedThumbnails));
     };
 
     if (folders.length > 0) {
@@ -127,4 +138,4 @@ const FolderGrid = ({ folders, isLoading = false }: FolderGridProps) => {
   );
 };
 
-export default FolderGrid; 
+export default FolderGrid;

@@ -4,6 +4,7 @@ import FolderGrid from '@/components/FolderGrid';
 import { listObjectsV2 } from '@/services/s3Client';
 import { Folder } from '@/types';
 import folderMapping from '@/data/folderMapping.json';
+import { getSignedUrlForObject } from '@/utils/s3Client';
 
 const HomePage = () => {
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -18,14 +19,27 @@ const HomePage = () => {
         });
 
         if (response.CommonPrefixes) {
-          const folderList = response.CommonPrefixes.map((prefix: { Prefix?: string }) => {
+          const folderList: Folder[] = [];
+
+          for (const prefix of response.CommonPrefixes) {
             const folderName = prefix.Prefix?.replace('/', '') || '';
-            return {
+            const displayName = folderMapping[folderName] || folderName;
+
+            let thumbnailUrl = '';
+            try {
+              // Tạo pre-signed URL cho thumbnail.jpg trong thư mục
+              thumbnailUrl = await getSignedUrlForObject(`${folderName}/thumbnail.jpg`);
+            } catch (e) {
+              // Nếu thumbnail không tồn tại, giữ trống, sẽ fallback về placeholder.jpg
+              console.warn(`Thumbnail not found for ${folderName}`);
+            }
+
+            folderList.push({
               name: folderName,
-              displayName: folderMapping[folderName] || folderName,
-              thumbnailUrl: `https://${import.meta.env.VITE_S3_BUCKET_NAME}.s3.${import.meta.env.VITE_AWS_REGION}.amazonaws.com/${folderName}/thumbnail.jpg`,
-            };
-          });
+              displayName,
+              thumbnailUrl,
+            });
+          }
 
           setFolders(folderList);
         }
@@ -49,4 +63,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage; 
+export default HomePage;
