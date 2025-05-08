@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardMedia, IconButton, Typography } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { Photo } from '../types/photo';
+import { loadImageWithOrientation } from '@/utils/loadImageWithCorrectOrientation';
 
 interface PhotoCardProps {
   photo: Photo;
@@ -10,6 +12,13 @@ interface PhotoCardProps {
 }
 
 export const PhotoCard = ({ photo, isFavorite, onToggleFavorite }: PhotoCardProps) => {
+  const [displayUrl, setDisplayUrl] = useState(photo.url);
+
+  useEffect(() => {
+    loadImageWithOrientation(photo.url).then(setDisplayUrl);
+  }, [photo.url]);
+
+  
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardMedia
