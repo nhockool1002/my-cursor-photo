@@ -5,8 +5,10 @@ import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import RotateRightIcon from '@mui/icons-material/RotateRight';
 import { MediaItem } from '@/types';
 import { favoriteService } from '@/services/favoriteService';
+import { rotationService } from '@/services/rotationService';
 
 interface MediaCardProps {
   item: MediaItem;
@@ -17,15 +19,31 @@ interface MediaCardProps {
   onToggleFavorite?: (photoId: string) => void;
 }
 
-const MediaCard: React.FC<MediaCardProps> = ({ item, onPrev, onNext, onOpen, isCurrent = false, onToggleFavorite }) => {
+const MediaCard: React.FC<MediaCardProps> = ({
+  item,
+  onPrev,
+  onNext,
+  onOpen,
+  isCurrent = false,
+  onToggleFavorite,
+}) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [open, setOpen] = useState(false);
   const [isThumbnailLoaded, setIsThumbnailLoaded] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [rotation, setRotation] = useState(rotationService.getRotation(item.key));
+  const [modalRotation, setModalRotation] = useState(rotationService.getRotation(item.key));
   const isVideo = item.key.toLowerCase().endsWith('.mov') || item.key.toLowerCase().endsWith('.mp4');
   const videoRef = useRef<HTMLVideoElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+
+  const handleRotateInModal = () => {
+    const newRotation = (modalRotation + 90) % 360;
+    setModalRotation(newRotation);
+    setRotation(newRotation);
+    rotationService.setRotation(item.key, newRotation);
+  };
 
   useEffect(() => {
     setIsFavorite(favoriteService.isFavorite(item.key));
@@ -52,7 +70,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onPrev, onNext, onOpen, isC
         id: item.key,
         url: item.url,
         title: item.key.split('/').pop() || '',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
     }
     setIsFavorite(!isFavorite);
@@ -82,6 +100,14 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onPrev, onNext, onOpen, isC
       handleClose();
       onNext();
     }
+  };
+
+  const handleRotate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newRotation = (rotation + 90) % 360;
+    setRotation(newRotation);
+    setModalRotation(newRotation);
+    rotationService.setRotation(item.key, newRotation);
   };
 
   useEffect(() => {
@@ -142,6 +168,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onPrev, onNext, onOpen, isC
               />
             </Box>
           )}
+
           {isVideo ? (
             <video
               ref={videoRef}
@@ -171,29 +198,49 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onPrev, onNext, onOpen, isC
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
+                transform: `rotate(${rotation}deg)`,
+                transition: 'transform 0.3s',
               }}
             />
           )}
-          <Box
-            className="media-overlay"
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.3)',
-              opacity: 0,
-              transition: 'opacity 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {isVideo && (
-              <PlayArrowIcon sx={{ fontSize: isMobile ? 32 : 48, color: 'white' }} />
-            )}
-          </Box>
+
+          {isVideo && (
+            <IconButton
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                color: 'white',
+                zIndex: 1,
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                },
+              }}
+            >
+              <PlayArrowIcon fontSize="large" />
+            </IconButton>
+          )}
+
+          {!isVideo && (
+            <IconButton
+              onClick={handleRotate}
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 53,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                },
+              }}
+            >
+              <RotateRightIcon />
+            </IconButton>
+          )}
+
           <IconButton
             onClick={handleToggleFavorite}
             sx={{
@@ -254,9 +301,12 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onPrev, onNext, onOpen, isC
                 height: 'auto',
                 maxHeight: '90vh',
                 objectFit: 'contain',
+                transform: `rotate(${modalRotation}deg)`,
+                transition: 'transform 0.3s',
               }}
             />
           )}
+
           <IconButton
             sx={{
               position: 'absolute',
@@ -271,8 +321,9 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onPrev, onNext, onOpen, isC
             }}
             onClick={handlePrev}
           >
-            <NavigateBeforeIcon fontSize={isMobile ? "medium" : "large"} />
+            <NavigateBeforeIcon fontSize={isMobile ? 'medium' : 'large'} />
           </IconButton>
+
           <IconButton
             sx={{
               position: 'absolute',
@@ -287,8 +338,25 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onPrev, onNext, onOpen, isC
             }}
             onClick={handleNext}
           >
-            <NavigateNextIcon fontSize={isMobile ? "medium" : "large"} />
+            <NavigateNextIcon fontSize={isMobile ? 'medium' : 'large'} />
           </IconButton>
+
+          <IconButton
+            onClick={handleRotateInModal}
+            sx={{
+              position: 'absolute',
+              top: 16,
+              right: 74,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              },
+            }}
+          >
+            <RotateRightIcon />
+          </IconButton>
+
           <IconButton
             onClick={handleToggleFavorite}
             sx={{
@@ -310,4 +378,4 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onPrev, onNext, onOpen, isC
   );
 };
 
-export default MediaCard; 
+export default MediaCard;

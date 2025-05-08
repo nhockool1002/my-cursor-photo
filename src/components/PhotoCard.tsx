@@ -10,6 +10,8 @@ interface PhotoCardProps {
 }
 
 export const PhotoCard = ({ photo, isFavorite, onToggleFavorite }: PhotoCardProps) => {
+
+  
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardMedia
