@@ -15,6 +15,7 @@ import { Folder } from '@/types';
 import FolderSkeleton from './FolderSkeleton';
 import { getSignedUrlForObject } from '@/utils/s3Client';
 import { rotationService } from '@/services/rotationService';
+import { thumbnailService } from '@/services/thumbnailService';
 
 interface FolderGridProps {
   folders: Folder[];
@@ -36,6 +37,17 @@ const FolderGrid = ({ folders, isLoading = false }: FolderGridProps) => {
 
       for (const folder of folders) {
         try {
+          // Check localStorage first
+          const savedThumbnail = thumbnailService.getThumbnail(folder.name);
+          if (savedThumbnail) {
+            const url = await getSignedUrlForObject(savedThumbnail.key);
+            updatedThumbnails[folder.name] = url;
+            updatedThumbnailKeys[folder.name] = savedThumbnail.key;
+            updatedRotations[savedThumbnail.key] = rotationService.getRotation(savedThumbnail.key);
+            continue;
+          }
+
+          // Fallback to existing S3 logic
           const response = await listObjectsV2({
             Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
             Prefix: `${folder.name}/`

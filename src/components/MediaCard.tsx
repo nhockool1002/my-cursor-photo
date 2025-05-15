@@ -6,9 +6,12 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import RotateRightIcon from '@mui/icons-material/RotateRight';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 import { MediaItem } from '@/types';
 import { favoriteService } from '@/services/favoriteService';
 import { rotationService } from '@/services/rotationService';
+import { thumbnailService } from '@/services/thumbnailService';
 
 interface MediaCardProps {
   item: MediaItem;
@@ -32,11 +35,29 @@ const MediaCard: React.FC<MediaCardProps> = ({
   const [open, setOpen] = useState(false);
   const [isThumbnailLoaded, setIsThumbnailLoaded] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isThumbnail, setIsThumbnail] = useState(false);
   const [rotation, setRotation] = useState(rotationService.getRotation(item.key));
   const [modalRotation, setModalRotation] = useState(rotationService.getRotation(item.key));
   const isVideo = item.key.toLowerCase().endsWith('.mov') || item.key.toLowerCase().endsWith('.mp4');
   const videoRef = useRef<HTMLVideoElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+
+  const folderName = item.key.split('/')[0]; // Extract folder name from key
+
+  // Update isThumbnail state
+  const updateThumbnailState = () => {
+    const savedThumbnail = thumbnailService.getThumbnail(folderName);
+    setIsThumbnail(savedThumbnail?.key === item.key);
+  };
+
+  useEffect(() => {
+    // Initial check
+    updateThumbnailState();
+    // Subscribe to thumbnail changes
+    const unsubscribe = thumbnailService.subscribe(folderName, updateThumbnailState);
+    // Cleanup on unmount
+    return () => unsubscribe();
+  }, [item.key, folderName]);
 
   const handleRotateInModal = () => {
     const newRotation = (modalRotation + 90) % 360;
@@ -74,6 +95,16 @@ const MediaCard: React.FC<MediaCardProps> = ({
       });
     }
     setIsFavorite(!isFavorite);
+  };
+
+  const handleToggleThumbnail = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isThumbnail) {
+      thumbnailService.removeThumbnail(folderName);
+    } else {
+      thumbnailService.setThumbnail(folderName, item.key);
+    }
+    // updateThumbnailState will be called via the subscriber
   };
 
   useEffect(() => {
@@ -224,21 +255,38 @@ const MediaCard: React.FC<MediaCardProps> = ({
           )}
 
           {!isVideo && (
-            <IconButton
-              onClick={handleRotate}
-              sx={{
-                position: 'absolute',
-                top: 8,
-                right: 53,
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                },
-              }}
-            >
-              <RotateRightIcon />
-            </IconButton>
+            <>
+              <IconButton
+                onClick={handleRotate}
+                sx={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 98,
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  },
+                }}
+              >
+                <RotateRightIcon />
+              </IconButton>
+              <IconButton
+                onClick={handleToggleThumbnail}
+                sx={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 53,
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  color: isThumbnail ? 'warning.main' : 'white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  },
+                }}
+              >
+                {isThumbnail ? <StarIcon /> : <StarBorderIcon />}
+              </IconButton>
+            </>
           )}
 
           <IconButton
@@ -341,21 +389,40 @@ const MediaCard: React.FC<MediaCardProps> = ({
             <NavigateNextIcon fontSize={isMobile ? 'medium' : 'large'} />
           </IconButton>
 
-          <IconButton
-            onClick={handleRotateInModal}
-            sx={{
-              position: 'absolute',
-              top: 16,
-              right: 74,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              color: 'white',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              },
-            }}
-          >
-            <RotateRightIcon />
-          </IconButton>
+          {!isVideo && (
+            <>
+              <IconButton
+                onClick={handleRotateInModal}
+                sx={{
+                  position: 'absolute',
+                  top: 16,
+                  right: 130,
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  },
+                }}
+              >
+                <RotateRightIcon />
+              </IconButton>
+              <IconButton
+                onClick={handleToggleThumbnail}
+                sx={{
+                  position: 'absolute',
+                  top: 16,
+                  right: 74,
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  color: isThumbnail ? 'warning.main' : 'white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  },
+                }}
+              >
+                {isThumbnail ? <StarIcon /> : <StarBorderIcon />}
+              </IconButton>
+            </>
+          )}
 
           <IconButton
             onClick={handleToggleFavorite}
