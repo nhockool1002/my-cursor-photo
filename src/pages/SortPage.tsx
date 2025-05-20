@@ -14,8 +14,6 @@ import folderMapping from '@/data/folderMapping.json';
 const SortPage = () => {
   const navigate = useNavigate();
   const [folders, setFolders] = useState<Folder[]>([]);
-  const [sortOrder, setSortOrder] = useState<'custom' | 'asc' | 'desc'>('custom');
-  const [originalOrder, setOriginalOrder] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchFolders = async () => {
@@ -34,10 +32,8 @@ const SortPage = () => {
 
             let thumbnailUrl = '';
             try {
-              // Tạo pre-signed URL cho thumbnail.jpg trong thư mục
               thumbnailUrl = await getSignedUrlForObject(`${folderName}/thumbnail.jpg`);
             } catch (e) {
-              // Nếu thumbnail không tồn tại, giữ trống, sẽ fallback về placeholder.jpg
               console.warn(`Thumbnail not found for ${folderName}`);
             }
 
@@ -52,7 +48,6 @@ const SortPage = () => {
           const savedOrder = localStorage.getItem('sortListFolder');
           if (savedOrder) {
             const orderArray = JSON.parse(savedOrder);
-            setOriginalOrder(orderArray);
             // Sắp xếp folders theo thứ tự đã lưu
             folderList.sort((a: Folder, b: Folder) => {
               const indexA = orderArray.indexOf(a.name);
@@ -82,7 +77,6 @@ const SortPage = () => {
         : nameB.localeCompare(nameA, 'vi');
     });
     setFolders(sortedFolders);
-    setSortOrder(order);
     // Lưu thứ tự mới vào localStorage
     localStorage.setItem('sortListFolder', JSON.stringify(sortedFolders.map(folder => folder.name)));
   };
@@ -97,8 +91,6 @@ const SortPage = () => {
     });
     
     setFolders(resetFolders);
-    setSortOrder('custom');
-    setOriginalOrder([]);
   };
 
   const handleDragEnd = (result: DropResult) => {
@@ -109,7 +101,6 @@ const SortPage = () => {
     items.splice(result.destination.index, 0, reorderedItem);
 
     setFolders(items);
-    setSortOrder('custom');
     // Lưu thứ tự mới vào localStorage
     localStorage.setItem('sortListFolder', JSON.stringify(items.map(folder => folder.name)));
   };
