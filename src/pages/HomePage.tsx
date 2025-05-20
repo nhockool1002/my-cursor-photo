@@ -3,8 +3,8 @@ import { Container, Typography } from '@mui/material';
 import FolderGrid from '@/components/FolderGrid';
 import { listObjectsV2 } from '@/services/s3Client';
 import { Folder } from '@/types';
-import folderMapping from '@/data/folderMapping.json';
 import { getSignedUrlForObject } from '@/utils/s3Client';
+import folderMapping from '@/data/folderMapping.json';
 
 const HomePage = () => {
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -38,6 +38,20 @@ const HomePage = () => {
               name: folderName,
               displayName,
               thumbnailUrl,
+            });
+          }
+
+          // Lấy thứ tự sắp xếp từ localStorage nếu có
+          const savedOrder = localStorage.getItem('sortListFolder');
+          if (savedOrder) {
+            const orderArray = JSON.parse(savedOrder);
+            // Sắp xếp folders theo thứ tự đã lưu
+            folderList.sort((a: Folder, b: Folder) => {
+              const indexA = orderArray.indexOf(a.name);
+              const indexB = orderArray.indexOf(b.name);
+              if (indexA === -1) return 1;
+              if (indexB === -1) return -1;
+              return indexA - indexB;
             });
           }
 
