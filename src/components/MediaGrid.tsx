@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Grid, Pagination, Box, useTheme, useMediaQuery } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Grid, Pagination, Box, useTheme, useMediaQuery, TextField } from '@mui/material';
 import { MediaItem } from '@/types';
 import MediaCard from '@/components/MediaCard';
 import MediaSkeleton from './MediaSkeleton';
@@ -9,6 +9,23 @@ interface MediaGridProps {
   isLoading?: boolean;
   onToggleFavorite?: (photoId: string) => void;
 }
+
+// Custom hook for debounce
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
 
 const MediaGrid = ({ items, isLoading = false, onToggleFavorite }: MediaGridProps) => {
   const theme = useTheme();
@@ -30,6 +47,17 @@ const MediaGrid = ({ items, isLoading = false, onToggleFavorite }: MediaGridProp
   const startIndex = (page - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentItems = items.slice(startIndex, endIndex);
+  const [inputPage, setInputPage] = useState('');
+  const debouncedInputPage = useDebounce(inputPage, 500); // 500ms delay
+
+  useEffect(() => {
+    const pageNumber = parseInt(debouncedInputPage);
+    if (!isNaN(pageNumber) && pageNumber > 0 && pageNumber <= totalPages) {
+      setPage(pageNumber);
+      setCurrentIndex(null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [debouncedInputPage, totalPages]);
 
   const handlePrev = () => {
     if (currentIndex === null) return;
@@ -73,8 +101,14 @@ const MediaGrid = ({ items, isLoading = false, onToggleFavorite }: MediaGridProp
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
+    setInputPage(value.toString());
     setCurrentIndex(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleInputPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setInputPage(value);
   };
 
   if (isLoading) {
@@ -122,13 +156,25 @@ const MediaGrid = ({ items, isLoading = false, onToggleFavorite }: MediaGridProp
         ))}
       </Grid>
       {totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 4, gap: 2 }}>
           <Pagination
             count={totalPages}
             page={page}
             onChange={handlePageChange}
             color="primary"
             size={isMobile ? "small" : "medium"}
+          />
+          <TextField
+            size="small"
+            value={inputPage}
+            onChange={handleInputPageChange}
+            placeholder={`1-${totalPages}`}
+            sx={{ width: '80px' }}
+            inputProps={{
+              min: 1,
+              max: totalPages,
+              type: 'number'
+            }}
           />
         </Box>
       )}
