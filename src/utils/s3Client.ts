@@ -36,4 +36,24 @@ export const getSignedUrlForObject = async (key: string): Promise<string> => {
   });
 
   return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+};
+
+export const listAllObjectsInFolder = async (folderName: string): Promise<string[]> => {
+  let isTruncated = true;
+  let continuationToken: string | undefined = undefined;
+  const allKeys: string[] = [];
+
+  while (isTruncated) {
+    const command = new ListObjectsV2Command({
+      Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
+      Prefix: `${folderName}/`,
+      ContinuationToken: continuationToken,
+    });
+    const response = await s3Client.send(command) as import('@aws-sdk/client-s3').ListObjectsV2CommandOutput;
+    allKeys.push(...(response.Contents?.map((object: { Key?: string }) => object.Key || "") || []));
+    isTruncated = response.IsTruncated ?? false;
+    continuationToken = response.NextContinuationToken;
+  }
+
+  return allKeys;
 }; 

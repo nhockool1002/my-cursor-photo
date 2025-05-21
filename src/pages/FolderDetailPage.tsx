@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Typography, Button, Box } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MediaGrid from '@/components/MediaGrid';
-import { listObjectsV2 } from '@/services/s3Client';
+import { listAllObjectsV2 } from '@/services/s3Client';
 import { MediaItem } from '@/types';
 import folderMapping from '@/data/folderMapping.json';
 import { getSignedUrlForObject } from '@/utils/s3Client';
@@ -37,36 +37,30 @@ const FolderDetailPage = () => {
           }
         }
 
-        const response = await listObjectsV2({
+        const allKeys = await listAllObjectsV2({
           Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
           Prefix: `${folderName}/`,
         });
-
         const mediaItems: MediaItem[] = [];
-
-        if (response.Contents) {
-          for (const item of response.Contents) {
-            const key = item.Key?.toLowerCase() || '';
-            const isMedia = (
-              key.endsWith('.jpg') ||
-              key.endsWith('.jpeg') ||
-              key.endsWith('.png') ||
-              key.endsWith('.heic') ||
-              key.endsWith('.heif') ||
-              key.endsWith('.mov') ||
-              key.endsWith('.mp4')
-            );
-
-            if (isMedia && item.Key) {
-              const signedUrl = await getSignedUrlForObject(item.Key);
-              mediaItems.push({
-                key: item.Key,
-                url: signedUrl,
-              });
-            }
+        for (const key of allKeys) {
+          const lowerKey = key.toLowerCase();
+          const isMedia = (
+            lowerKey.endsWith('.jpg') ||
+            lowerKey.endsWith('.jpeg') ||
+            lowerKey.endsWith('.png') ||
+            lowerKey.endsWith('.heic') ||
+            lowerKey.endsWith('.heif') ||
+            lowerKey.endsWith('.mov') ||
+            lowerKey.endsWith('.mp4')
+          );
+          if (isMedia) {
+            const signedUrl = await getSignedUrlForObject(key);
+            mediaItems.push({
+              key,
+              url: signedUrl,
+            });
           }
         }
-
         setItems(mediaItems);
         sessionStorage.setItem(cacheKey, JSON.stringify({
           data: mediaItems,
