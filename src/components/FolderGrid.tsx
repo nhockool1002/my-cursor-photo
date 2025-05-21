@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import RotateRightIcon from '@mui/icons-material/RotateRight';
-import { listObjectsV2 } from '@/services/s3Client';
+import { listAllObjectsV2 } from '@/services/s3Client';
 import { Folder } from '@/types';
 import FolderSkeleton from './FolderSkeleton';
 import { getSignedUrlForObject } from '@/utils/s3Client';
@@ -48,29 +48,26 @@ const FolderGrid = ({ folders, isLoading = false }: FolderGridProps) => {
           }
 
           // Fallback to existing S3 logic
-          const response = await listObjectsV2({
+          const allKeys = await listAllObjectsV2({
             Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
             Prefix: `${folder.name}/`
           });
-
-          if (response.Contents && response.Contents.length > 0) {
-            const imageItem = response.Contents.find(item => {
-              const key = item.Key?.toLowerCase() || '';
+          if (allKeys.length > 0) {
+            const imageKey = allKeys.find(key => {
+              const lowerKey = key.toLowerCase();
               return (
-                key.endsWith('.jpg') ||
-                key.endsWith('.jpeg') ||
-                key.endsWith('.png') ||
-                key.endsWith('.heic') ||
-                key.endsWith('.heif')
+                lowerKey.endsWith('.jpg') ||
+                lowerKey.endsWith('.jpeg') ||
+                lowerKey.endsWith('.png') ||
+                lowerKey.endsWith('.heic') ||
+                lowerKey.endsWith('.heif')
               );
             });
-
-            if (imageItem?.Key) {
-              const key = imageItem.Key;
-              const url = await getSignedUrlForObject(key);
+            if (imageKey) {
+              const url = await getSignedUrlForObject(imageKey);
               updatedThumbnails[folder.name] = url;
-              updatedThumbnailKeys[folder.name] = key;
-              updatedRotations[key] = rotationService.getRotation(key);
+              updatedThumbnailKeys[folder.name] = imageKey;
+              updatedRotations[imageKey] = rotationService.getRotation(imageKey);
             }
           }
         } catch (error) {
