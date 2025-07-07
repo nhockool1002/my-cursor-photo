@@ -5,6 +5,7 @@ import { darkTheme, lightTheme } from '@/theme';
 import ThemeToggle from '@/components/ThemeToggle';
 import FavoriteButton from '@/components/FavoriteButton';
 import SortButton from '@/components/SortButton';
+import AuthGuard from '@/components/AuthGuard';
 import HomePage from '@/pages/HomePage';
 import FolderDetailPage from '@/pages/FolderDetailPage';
 import Favorite from '@/pages/Favorite';
@@ -28,17 +29,19 @@ const App = () => {
     <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
       <CssBaseline />
       <Router>
-        <div data-testid="app">
-          <ThemeToggle onToggle={handleThemeToggle} />
-          <FavoriteButton />
-          <SortButton />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/folder/:folderName" element={<FolderDetailPage />} />
-            <Route path="/favorite" element={<Favorite />} />
-            <Route path="/sort" element={<SortPage />} />
-          </Routes>
-        </div>
+        <AuthGuard>
+          <div data-testid="app">
+            <ThemeToggle onToggle={handleThemeToggle} />
+            <FavoriteButton />
+            <SortButton />
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/folder/:folderName" element={<FolderDetailPage />} />
+              <Route path="/favorite" element={<Favorite />} />
+              <Route path="/sort" element={<SortPage />} />
+            </Routes>
+          </div>
+        </AuthGuard>
       </Router>
     </ThemeProvider>
   );
