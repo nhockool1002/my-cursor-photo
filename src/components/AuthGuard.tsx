@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AUTH_CONFIG, isValidSession, createSession, clearSession } from '@/config/auth';
+import { AUTH_CONFIG, isValidSession, createSession } from '@/config/auth';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -13,16 +13,14 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   password = AUTH_CONFIG.password 
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showLogin, setShowLogin] = useState(true);
   const [error, setError] = useState('');
   const [shake, setShake] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    // Kiểm tra xem đã đăng nhập chưa
     if (isValidSession()) {
       setIsAuthenticated(true);
-      setShowLogin(false);
+      setError('');
     }
   }, []);
 
@@ -34,7 +32,6 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
 
     if (inputUsername === username && inputPassword === password) {
       setIsAuthenticated(true);
-      setShowLogin(false);
       setError('');
       createSession();
     } else {
@@ -42,12 +39,6 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
       setShake(true);
       setTimeout(() => setShake(false), 500);
     }
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setShowLogin(true);
-    clearSession();
   };
 
   if (!isAuthenticated) {
@@ -222,12 +213,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
     );
   }
 
-  return (
-    <div>
-      {/* Đã ẩn nút Đăng xuất */}
-      {children}
-    </div>
-  );
+  return <div>{children}</div>;
 };
 
 export default AuthGuard; 
